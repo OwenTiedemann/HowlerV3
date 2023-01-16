@@ -1,16 +1,28 @@
-# This is a sample Python script.
+import configparser
+import discord
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+config = configparser.ConfigParser()
+config.read('config.ini')
+DISCORD_TOKEN = config['DISCORD']['token']
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+client = discord.Client(intents=intents)
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+@client.event
+async def on_ready():
+    print(f'We have logged in as {client.user}')
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    if message.content.startswith('$hello'):
+        await message.channel.send('Hello!')
+
+
+client.run(DISCORD_TOKEN)
