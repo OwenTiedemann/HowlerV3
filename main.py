@@ -2,10 +2,23 @@ import discord
 import os
 from discord.ext import commands, tasks
 import motor.motor_asyncio
-import gridfs
+from publitio import PublitioAPI
+from dotenv import load_dotenv
 
-DISCORD_TOKEN = os.environ['DISCORD_TOKEN']
-MONGO_TOKEN = os.environ['MONGO_TOKEN']
+TEST_ENVIRONMENT = os.getenv('HOWLER_TESTING_ENVIRONMENT') == 'true'
+
+load_dotenv()
+
+if TEST_ENVIRONMENT:
+    DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+    MONGO_TOKEN = os.getenv('MONGO_TOKEN')
+    PUBLITIO_KEY = os.getenv('PUBLITIO_KEY')
+    PUBLITIO_SECRET = os.getenv('PUBLITIO_SECRET')
+else:
+    DISCORD_TOKEN = os.environ['DISCORD_TOKEN']
+    MONGO_TOKEN = os.environ['MONGO_TOKEN']
+    PUBLITIO_KEY = os.environ['PUBLITIO_KEY']
+    PUBLITIO_SECRET = os.environ['PUBLITIO_SECRET']
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -13,51 +26,35 @@ intents.message_content = True
 client = commands.Bot(command_prefix='$', intents=intents)
 
 database_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_TOKEN)
-fs = gridfs.GridFS(database_client)
-client.image_database = database_client['images']
+client.custom_commands_collection = database_client['commands']['custom']
 
-client.image_commands = []
+client.publitio_api = PublitioAPI(PUBLITIO_KEY, PUBLITIO_SECRET)
 
-
-class ImageCommand:
-    def __init__(self, command, file):
-        self.command = command
-        self.file = file
+cogs = ('cogs.CustomCommands',)
 
 
-@tasks.loop(seconds=1, count=1)
-async def get_all_images():
-    client.image_commands.clear()
-    collection = await client.image_database.find({}).to_list(length=None)
-    for document in collection:
-        x = ImageCommand(document["_id"], document['file'])
-        client.image_commands.append(x)
-
-
-@client.command()
-async def ping(ctx):
-    await ctx.send("pong")
-
-
-@client.command()
-async def upload(ctx):
-    file = ctx.message.attachments[0]
-    with open(file, 'rb') as f:
-        contents = f.read()
-
-    fs.put(contents, filename="file")
-
-
-@client.event()
+@client.event
 async def on_message(message):
-    message_content = message.content.lower()
-    if message.content.startswith(("howler ", "Howler ")):
-        res = message.content[0].lower() + message.content[1:]
-        for command in client.image_commands:
-            if res == command.command:
-                file = discord.File(f"images/{command.file}")
-                await message.channel.send(file=file)
-                return
+    if message.author.bot:
+        return
+    if message.content.startswith(client.command_prefix):
+        command_name = message.content[len(client.command_prefix):]
+        command = await client.custom_commands_collection.find_one({'name': command_name})
+        if command:
+            if 'image_url' in command:
+                await message.channel.send(command['image_url'])
+            elif 'text_response' in command:
+                await message.channel.send(command['text_response'])
+
+            return
+
+    await client.process_commands(message)
+
+
+@client.event
+async def setup_hook():
+    for cog in cogs:
+        await client.load_extension(cog)
 
 
 print('starting bot')
