@@ -18,7 +18,7 @@ class CustomCommandsCog(commands.Cog):
 
     # Create a group command for custom commands
     @commands.group()
-    @commands.has_any_role('Commander', 'Admin')
+    @commands.has_any_role('Commander', 'Discord Admin', 'Rick Tocchet Stan')
     async def custom(self, ctx):
         if not ctx.invoked_subcommand:
             await ctx.send("Tsk.")
@@ -26,7 +26,7 @@ class CustomCommandsCog(commands.Cog):
 
     # Create a command to register new custom commands
     @custom.command()
-    @commands.has_any_role('Commander', 'Admin')
+    @commands.has_any_role('Commander', 'Discord Admin', 'Rick Tocchet Stan')
     async def add(self, ctx, response_type, command_name, text=None):
         # Check if the command name is already taken
         if await self.collection.find_one({'name': command_name}):
@@ -60,7 +60,7 @@ class CustomCommandsCog(commands.Cog):
 
     # Create a command to un register custom commands
     @custom.command()
-    @commands.has_any_role('Commander', 'Admin')
+    @commands.has_any_role('Commander', 'Discord Admin', 'Rick Tocchet Stan')
     async def remove(self, ctx, command_name):
         command = await self.collection.find_one({'name': command_name})
         if command:

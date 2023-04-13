@@ -23,22 +23,29 @@ else:
 intents = discord.Intents.default()
 intents.message_content = True
 
-client = commands.Bot(command_prefix='$', intents=intents)
+client = commands.Bot(command_prefix=['howler ', 'Howler '], intents=intents)
 
 database_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_TOKEN)
 client.custom_commands_collection = database_client['commands']['custom']
 
 client.publitio_api = PublitioAPI(PUBLITIO_KEY, PUBLITIO_SECRET)
 
-cogs = ('cogs.CustomCommands',)
+cogs = ('cogs.CustomCommands', 'cogs.TriviaCommands')
+
+
+def getCommandName(message):
+    if message.content.startswith('howler '):
+        return message.content[len('howler '):]
+    elif message.content.startswith('Howler '):
+        return message.content[len('Howler '):]
 
 
 @client.event
 async def on_message(message):
     if message.author.bot:
         return
-    if message.content.startswith(client.command_prefix):
-        command_name = message.content[len(client.command_prefix):]
+    if message.content.startswith(tuple(client.command_prefix)):
+        command_name = getCommandName(message)
         command = await client.custom_commands_collection.find_one({'name': command_name})
         if command:
             if 'image_url' in command:
