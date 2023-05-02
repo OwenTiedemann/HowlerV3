@@ -4,6 +4,8 @@ from discord.ext import commands, tasks
 import motor.motor_asyncio
 from publitio import PublitioAPI
 from dotenv import load_dotenv
+import aiohttp
+import asyncio
 
 TEST_ENVIRONMENT = os.getenv('HOWLER_TESTING_ENVIRONMENT') == 'true'
 
@@ -27,6 +29,7 @@ client = commands.Bot(command_prefix=['howler ', 'Howler '], intents=intents)
 
 database_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_TOKEN)
 client.custom_commands_collection = database_client['commands']['custom']
+client.trivia_question_info_collection = database_client['trivia']['question_info']
 
 client.publitio_api = PublitioAPI(PUBLITIO_KEY, PUBLITIO_SECRET)
 
@@ -58,10 +61,39 @@ async def on_message(message):
     await client.process_commands(message)
 
 
+class Bracket:
+    def __init__(self, entry):
+        self.name = entry['entry name']
+        self.possible_points = entry['possible_points']
+
+
+@client.command()
+async def bracket(ctx):
+    async with aiohttp.ClientSession() as session:
+        url = 'https://low6-nhl-brackets-prod.azurewebsites.net/leagues/38650/leaderboard?offset=0&limit=10'
+        async with session.get(url) as resp:
+            data = await resp.json()
+            entries = data['entries']
+            leaderboard = "```\n"
+            for entry in entries:
+                name = entry['entry_name']
+                points = entry['points']
+                possible_points = entry['possible_points']
+                leaderboard += f'{name:<30}{points:<3} {possible_points:<3}\n'
+
+            embed = discord.Embed(
+                title="Bracket Challenge Leaderboard"
+            )
+            embed.description = leaderboard + "```"
+
+            await ctx.send(embed=embed)
+
+
 @client.event
 async def setup_hook():
     for cog in cogs:
         await client.load_extension(cog)
+
 
 
 print('starting bot')
