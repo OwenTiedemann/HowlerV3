@@ -72,7 +72,7 @@ class CustomCommandsCog(commands.Cog):
     # Create a command to register new custom commands
     @custom.command()
     @commands.has_any_role('Commander', 'Discord Admin', 'Rick Tocchet Stan')
-    async def add(self, ctx, response_type, command_name, text=None):
+    async def add(self, ctx, response_type, command_name, *, text=None):
         # Check if the command name is already taken
         if await self.collection.find_one({'name': command_name}):
             await ctx.send(f"The custom command '{command_name}' is already taken.")
