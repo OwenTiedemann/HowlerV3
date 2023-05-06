@@ -1,4 +1,7 @@
+import discord
 from discord.ext import commands
+
+CUSTOM_COMMANDS_CHANNEL_ID = 812144663279566899
 
 
 class CustomCommandsCog(commands.Cog):
@@ -24,6 +27,48 @@ class CustomCommandsCog(commands.Cog):
             await ctx.send("Tsk.")
             return
 
+    async def post_new_lists(self):
+        channel = self.bot.get_channel(CUSTOM_COMMANDS_CHANNEL_ID)
+        commands_list = await self.collection.find({}).to_list(length=None)
+
+        async def image_list():
+
+            list_string = ""
+            for command in commands_list:
+                if len(list_string) > 1500:
+                    embed = discord.Embed()
+                    embed.title = "Image Commands"
+                    embed.description = list_string
+                    await channel.send(embed=embed)
+                    list_string = ""
+                if 'image_url' in command:
+                    list_string += f"[howler {command['name']}]({command['image_url']})\n"
+
+            embed = discord.Embed()
+            embed.title = "Image Commands"
+            embed.description = list_string
+            await channel.send(embed=embed)
+
+        async def text_list():
+            list_string = ""
+            for command in commands_list:
+                if len(list_string) > 1500:
+                    embed = discord.Embed()
+                    embed.title = "Text Commands"
+                    embed.description = list_string
+                    await channel.send(embed=embed)
+                    list_string = ""
+                if 'text_response' in command:
+                    list_string += f"howler {command['name']}\n"
+
+            embed = discord.Embed()
+            embed.title = "Text Commands"
+            embed.description = list_string
+            await channel.send(embed=embed)
+
+        await image_list()
+        await text_list()
+
     # Create a command to register new custom commands
     @custom.command()
     @commands.has_any_role('Commander', 'Discord Admin', 'Rick Tocchet Stan')
@@ -43,6 +88,7 @@ class CustomCommandsCog(commands.Cog):
             await ctx.send(f"An image attachment is required for an image command.")
             return
 
+        channel = self.bot.get_channel(CUSTOM_COMMANDS_CHANNEL_ID)
         if response_type.lower() == 'image':
             file = await ctx.message.attachments[0].read()
             response = await self.upload_image(file)
@@ -58,6 +104,9 @@ class CustomCommandsCog(commands.Cog):
             await self.collection.insert_one({'name': command_name, 'user': str(ctx.author), 'text_response': text_response})
             await ctx.send(f"The custom command '{command_name}' has been registered with a text response.")
 
+        await channel.purge(limit=100, check=self.bot.is_me)
+        await self.post_new_lists()
+
     # Create a command to un register custom commands
     @custom.command()
     @commands.has_any_role('Commander', 'Discord Admin', 'Rick Tocchet Stan')
@@ -68,8 +117,53 @@ class CustomCommandsCog(commands.Cog):
             if 'image_url' in command:
                 await self.delete_image(command['publitio_id'])
             await ctx.send(f"The custom command '{command_name}' has been deleted.")
+            channel = self.bot.get_channel(CUSTOM_COMMANDS_CHANNEL_ID)
+            await channel.purge(limit=100, check=self.bot.is_me)
+            await self.post_new_lists()
         else:
             await ctx.send(f"The custom command '{command_name}' doesn't exist.")
+
+    @commands.command()
+    async def image(self, ctx, category):
+        if category == "list":
+            commands_list = await self.collection.find({}).to_list(length=None)
+
+            list_string = ""
+            for command in commands_list:
+                if len(list_string) > 1500:
+                    embed = discord.Embed()
+                    embed.title = "Image Commands"
+                    embed.description = list_string
+                    await ctx.send(embed=embed)
+                    list_string = ""
+                if 'image_url' in command:
+                    list_string += f"[howler {command['name']}]({command['image_url']})\n"
+
+            embed = discord.Embed()
+            embed.title = "Image Commands"
+            embed.description = list_string
+            await ctx.send(embed=embed)
+
+    @commands.command()
+    async def text(self, ctx, category):
+        if category == "list":
+            commands_list = await self.collection.find({}).to_list(length=None)
+
+            list_string = ""
+            for command in commands_list:
+                if len(list_string) > 1500:
+                    embed = discord.Embed()
+                    embed.title = "Text Commands"
+                    embed.description = list_string
+                    await ctx.send(embed=embed)
+                    list_string = ""
+                if 'text_response' in command:
+                    list_string += f"howler {command['name']}\n"
+
+            embed = discord.Embed()
+            embed.title = "Text Commands"
+            embed.description = list_string
+            await ctx.send(embed=embed)
 
 
 async def setup(bot):
