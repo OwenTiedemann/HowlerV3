@@ -25,6 +25,7 @@ else:
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 
 client = commands.Bot(command_prefix=PREFIXES, intents=intents)
 
@@ -41,7 +42,7 @@ client.trivia_question_info_collection = database_client['trivia']['question_inf
 
 client.publitio_api = PublitioAPI(PUBLITIO_KEY, PUBLITIO_SECRET)
 
-cogs = ('cogs.CustomCommands', 'cogs.TriviaCommands')
+cogs = ('cogs.CustomCommands', 'cogs.TriviaCommands', 'cogs.ModTools')
 
 
 def getCommandName(message):
