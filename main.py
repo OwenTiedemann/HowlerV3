@@ -7,16 +7,17 @@ from dotenv import load_dotenv
 import aiohttp
 import asyncio
 
+load_dotenv()
 TEST_ENVIRONMENT = os.getenv('HOWLER_TESTING_ENVIRONMENT') == 'true'
 
-load_dotenv()
-
 if TEST_ENVIRONMENT:
+    PREFIXES = ['$', '%']
     DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
     MONGO_TOKEN = os.getenv('MONGO_TOKEN')
     PUBLITIO_KEY = os.getenv('PUBLITIO_KEY')
     PUBLITIO_SECRET = os.getenv('PUBLITIO_SECRET')
 else:
+    PREFIXES = ['howler ', 'Howler']
     DISCORD_TOKEN = os.environ['DISCORD_TOKEN']
     MONGO_TOKEN = os.environ['MONGO_TOKEN']
     PUBLITIO_KEY = os.environ['PUBLITIO_KEY']
@@ -25,7 +26,14 @@ else:
 intents = discord.Intents.default()
 intents.message_content = True
 
-client = commands.Bot(command_prefix=['howler ', 'Howler '], intents=intents)
+client = commands.Bot(command_prefix=PREFIXES, intents=intents)
+
+
+def is_me(m):
+    return m.author == client.user
+
+
+client.is_me = is_me
 
 database_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_TOKEN)
 client.custom_commands_collection = database_client['commands']['custom']
@@ -61,12 +69,6 @@ async def on_message(message):
     await client.process_commands(message)
 
 
-class Bracket:
-    def __init__(self, entry):
-        self.name = entry['entry name']
-        self.possible_points = entry['possible_points']
-
-
 @client.command()
 async def bracket(ctx):
     async with aiohttp.ClientSession() as session:
@@ -93,7 +95,6 @@ async def bracket(ctx):
 async def setup_hook():
     for cog in cogs:
         await client.load_extension(cog)
-
 
 
 print('starting bot')
