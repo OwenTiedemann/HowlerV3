@@ -4,6 +4,7 @@ from discord.ext import commands
 
 class ModTools(commands.Cog):
     def __init__(self, bot):
+        print("Registering Mod Tools Cog")
         self.bot = bot
 
     @commands.Cog.listener()

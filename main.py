@@ -17,7 +17,7 @@ if TEST_ENVIRONMENT:
     PUBLITIO_KEY = os.getenv('PUBLITIO_KEY')
     PUBLITIO_SECRET = os.getenv('PUBLITIO_SECRET')
 else:
-    PREFIXES = ['howler ', 'Howler']
+    PREFIXES = ['howler ', 'Howler ']
     DISCORD_TOKEN = os.environ['DISCORD_TOKEN']
     MONGO_TOKEN = os.environ['MONGO_TOKEN']
     PUBLITIO_KEY = os.environ['PUBLITIO_KEY']
@@ -29,6 +29,7 @@ intents.members = True
 
 client = commands.Bot(command_prefix=PREFIXES, intents=intents)
 
+print(client.command_prefix)
 
 def is_me(m):
     return m.author == client.user
@@ -38,7 +39,8 @@ client.is_me = is_me
 
 database_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_TOKEN)
 client.custom_commands_collection = database_client['commands']['custom']
-client.trivia_question_info_collection = database_client['trivia']['question_info']
+client.trivia_database = database_client['database']
+
 
 client.publitio_api = PublitioAPI(PUBLITIO_KEY, PUBLITIO_SECRET)
 
