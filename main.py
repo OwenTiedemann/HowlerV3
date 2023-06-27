@@ -6,7 +6,7 @@ from publitio import PublitioAPI
 from dotenv import load_dotenv
 import aiohttp
 import asyncio
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import functools
 
 load_dotenv()
@@ -113,11 +113,6 @@ def sync_func():
 @client.command()
 async def slap(ctx, user: discord.User):
     author = ctx.author
-
-    if user.id == 151087006989025281:
-        user = ctx.author
-        author = client.user
-
     author_avatar = author.display_avatar
     user_avatar = user.display_avatar
     await author_avatar.save("slap/author.png")
@@ -131,10 +126,210 @@ async def slap(ctx, user: discord.User):
     await ctx.send(file=file)
 
 
+def prepare_gif():
+    images = []
+    size = 64, 64
+    profilePic = Image.open('yeet/user.png')
+    profilePic.thumbnail(size, Image.LANCZOS)
+
+    for i, (framePath, options) in enumerate(zip(yeetFrames, profilePicCoords)):
+        frame = Image.open(framePath)
+        profilePic.thumbnail(options['size'], Image.LANCZOS)
+        frame.paste(profilePic, options["coords"])
+        text = ImageDraw.Draw(frame)
+        myFont = ImageFont.truetype('arial.ttf', 50)
+        text.text((115, 140), "YEET", font=myFont)
+        images.append(frame)
+        profilePic.thumbnail(size, Image.LANCZOS)
+
+    images[0].save('yeet/yeet.gif',
+                   save_all=True, append_images=images[1:], optimize=False, duration=80, loop=0)
+
+
 @client.event
 async def setup_hook():
     for cog in cogs:
         await client.load_extension(cog)
+
+
+yeetFrames = [
+    "frames/frame_11_delay-0.1s.jpg",
+    "frames/frame_12_delay-0.1s.jpg",
+    "frames/frame_13_delay-0.1s.jpg",
+    "frames/frame_14_delay-0.1s.jpg",
+    "frames/frame_15_delay-0.1s.jpg",
+    "frames/frame_16_delay-0.1s.jpg",
+    "frames/frame_17_delay-0.1s.jpg",
+    "frames/frame_18_delay-0.1s.jpg",
+    "frames/frame_19_delay-0.1s.jpg",
+    "frames/frame_20_delay-0.1s.jpg",
+    "frames/frame_21_delay-0.1s.jpg",
+    "frames/frame_22_delay-0.1s.jpg",
+    "frames/frame_23_delay-0.1s.jpg",
+    "frames/frame_24_delay-0.1s.jpg",
+    "frames/frame_25_delay-0.1s.jpg",
+    "frames/frame_26_delay-0.1s.jpg",
+    "frames/frame_27_delay-0.1s.jpg",
+    "frames/frame_28_delay-0.1s.jpg",
+    "frames/frame_29_delay-0.1s.jpg",
+    "frames/frame_30_delay-0.1s.jpg",
+    "frames/frame_31_delay-0.1s.jpg",
+    "frames/frame_32_delay-0.1s.jpg",
+    "frames/frame_33_delay-0.1s.jpg",
+    "frames/frame_34_delay-0.1s.jpg",
+    "frames/frame_35_delay-0.1s.jpg",
+    "frames/frame_36_delay-0.1s.jpg",
+    "frames/frame_37_delay-0.1s.jpg",
+    "frames/frame_38_delay-0.1s.jpg",
+    "frames/frame_39_delay-0.1s.jpg",
+    "frames/frame_40_delay-0.1s.jpg",
+    "frames/frame_41_delay-0.1s.jpg",
+    "frames/frame_42_delay-0.1s.jpg",
+]
+
+profilePicCoords = [
+    {
+        "coords": (162, 65),
+        "size": (64, 64)
+    },
+    {
+        "coords": (155, 50),
+        "size": (64, 64)
+    },
+    {
+        "coords": (100, 10),
+        "size": (64, 64)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (64, 64)
+    },
+    {
+        "coords": (260, 90),
+        "size": (64, 64)
+    },
+    {
+        "coords": (162, 65),
+        "size": (64, 64)
+    },
+    {
+        "coords": (75, 0),
+        "size": (64, 64)
+    },
+    {
+        "coords": (120, 50),
+        "size": (16, 16)
+    },
+    {
+        "coords": (128, 30),
+        "size": (16, 16)
+    },
+    {
+        "coords": (175, 50),
+        "size": (16, 16)
+    },
+    {
+        "coords": (170, 65),
+        "size": (16, 16)
+    },
+    {
+        "coords": (160, 75),
+        "size": (16, 16)
+    },
+    {
+        "coords": (160, 79),
+        "size": (16, 16)
+    },
+    {
+        "coords": (160, 79),
+        "size": (16, 16)
+    },
+    {
+        "coords": (160, 79),
+        "size": (16, 16)
+    },
+    {
+        "coords": (172, 73),
+        "size": (16, 16)
+    },
+    {
+        "coords": (163, 40),
+        "size": (16, 16)
+    },
+    {
+        "coords": (83, 20),
+        "size": (16, 16)
+    },
+    {
+        "coords": (40, 13),
+        "size": (16, 16)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+    {
+        "coords": (-100, -100),
+        "size": (32, 32)
+    },
+]
+
+
+@client.command()
+async def yeet(ctx, user: discord.User):
+    user_avatar = user.display_avatar
+    await user_avatar.save("yeet/user.png")
+
+    thing = functools.partial(prepare_gif)
+
+    some_stuff = await client.loop.run_in_executor(None, thing)
+
+    file = discord.File("yeet/yeet.gif")
+    await ctx.send(file=file)
 
 
 print('starting bot')
