@@ -43,10 +43,12 @@ client.is_me = is_me
 database_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_TOKEN)
 client.custom_commands_collection = database_client['commands']['custom']
 client.trivia_database = database_client['database']
+client.reaction_event_database = database_client['reactionevents']
 
 client.publitio_api = PublitioAPI(PUBLITIO_KEY, PUBLITIO_SECRET)
+client.reaction_events = []
 
-cogs = ('cogs.CustomCommands', 'cogs.TriviaCommands', 'cogs.ModTools')
+cogs = ('cogs.CustomCommands', 'cogs.TriviaCommands', 'cogs.ModTools', 'cogs.Reactions')
 
 
 def getCommandName(message):
@@ -60,6 +62,14 @@ def getCommandName(message):
 async def on_message(message):
     if message.author.bot:
         return
+    lowercase_message = message.content.lower()
+    for event in client.reaction_events:
+        if event.text in lowercase_message:
+            if event.type == "custom":
+                emoji = client.get_emoji(event.reaction)
+                await message.add_reaction(emoji)
+            else:
+                await message.add_reaction(event.reaction)
     if message.content.startswith(tuple(client.command_prefix)):
         command_name = getCommandName(message)
         command = await client.custom_commands_collection.find_one({'name': command_name})
