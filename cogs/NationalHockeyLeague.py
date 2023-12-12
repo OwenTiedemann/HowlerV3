@@ -39,7 +39,7 @@ class NationalHockeyLeague(commands.Cog):
         channel = self.bot.get_channel(798968918692724736)
         await channel.send(embed=embed)
 
-    @commands.command()
+    #@commands.command()
     async def checkifgame(self, ctx):
         today = datetime.today().strftime('%Y-%m-%d')
         response = await fetch(f'https://api-web.nhle.com/v1/schedule/{today}')
