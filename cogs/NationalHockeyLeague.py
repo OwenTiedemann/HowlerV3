@@ -5,6 +5,8 @@ import pytz
 import aiohttp
 import asyncio
 
+from iso8601 import iso8601
+
 EST = pytz.timezone('US/Eastern')
 
 
@@ -26,9 +28,10 @@ class NationalHockeyLeague(commands.Cog):
 
     async def generate_schedule_embed(self, team, enemy, game):
         enemyName = enemy["placeName"]["default"]
+        print(game['startTimeUTC'])
         embed = discord.Embed(
             title="It's Game Day!!!",
-            timestamp=datetime.fromisoformat(game['startTimeUTC']),
+            timestamp=iso8601.parse_date(game['startTimeUTC']),
             description=f'{enemyName} gonna get stomped!'
         )
         embed.set_image(url="https://media.publit.io/file/fil-pmn.gif")
@@ -47,8 +50,10 @@ class NationalHockeyLeague(commands.Cog):
 
             if homeTeam['abbrev'] == 'ARI':
                 await self.generate_schedule_embed(homeTeam, awayTeam, game)
+                return
             elif awayTeam['abbrev'] == 'ARI':
                 await self.generate_schedule_embed(awayTeam, homeTeam, game)
+                return
 
         await ctx.send("It ain't")
 

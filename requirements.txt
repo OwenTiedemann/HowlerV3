@@ -6,3 +6,4 @@ python-dotenv~=1.0.0
 Pillow==9.5.0
 pytz~=2023.3.post1
 aiohttp~=3.8.4
+iso8601~=2.1.0
