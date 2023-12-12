@@ -36,7 +36,7 @@ class NationalHockeyLeague(commands.Cog):
         )
         embed.set_image(url="https://media.publit.io/file/fil-pmn.gif")
 
-        channel = self.bot.get_channel(756640703165104179)
+        channel = self.bot.get_channel(798968918692724736)
         await channel.send(embed=embed)
 
     @commands.command()
