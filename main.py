@@ -48,7 +48,7 @@ client.reaction_event_database = database_client['reactionevents']
 client.publitio_api = PublitioAPI(PUBLITIO_KEY, PUBLITIO_SECRET)
 client.reaction_events = []
 
-cogs = ('cogs.CustomCommands', 'cogs.TriviaCommands', 'cogs.ModTools', 'cogs.Reactions')
+cogs = ('cogs.CustomCommands', 'cogs.TriviaCommands', 'cogs.ModTools', 'cogs.Reactions', 'cogs.NationalHockeyLeague')
 
 
 def getCommandName(message):
