@@ -8,7 +8,8 @@ from iso8601 import iso8601
 EST = pytz.timezone('US/Eastern')
 UTC = pytz.timezone('UTC')
 
-CHANNEL_ID = 870019149743669288
+CHANNEL_ID = 798968918692724736
+DATABASE_RECORD = "1"
 
 
 async def fetch(url):
@@ -80,7 +81,7 @@ class NationalHockeyLeague(commands.Cog):
             if homeTeam['abbrev'] == 'ARI':
                 game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
                 game_id = game['id']
-                await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+                await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
                     "gameTime": game_time.isoformat(),
                     "game_id": game_id,
                     "postedMorningMessage": True
@@ -89,7 +90,7 @@ class NationalHockeyLeague(commands.Cog):
             elif awayTeam['abbrev'] == 'ARI':
                 game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
                 game_id = game['id']
-                await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+                await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
                     "gameTime": game_time.isoformat(),
                     "game_id": game_id,
                     "postedMorningMessage": True
@@ -127,7 +128,7 @@ class NationalHockeyLeague(commands.Cog):
         await channel.send(embed=embed)
 
     async def reset_db_values(self):
-        await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+        await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
             "postedMorningMessage": False,
             'gameTime': None,
             'game_id': 0,
@@ -161,7 +162,7 @@ class NationalHockeyLeague(commands.Cog):
         oneAfterTen = datetime(currentYear, currentMonth, currentDay, hour=10, minute=0, second=45, tzinfo=EST)
 
         if self.isNowInTimePeriod(tenAM, oneAfterTen, datetime.now(tz=EST)):
-            await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+            await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
                 "postedMorningMessage": True,
             }})
             await self.post_game()
@@ -195,12 +196,12 @@ class NationalHockeyLeague(commands.Cog):
             if len(check_goals) > len(self.goals):
                 self.goals = check_goals
                 await self.post_goal(self.goals[-1])
-                await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+                await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
                     "goals": self.goals
                 }})
 
             if game['gameState'] == 'FINAL':
-                await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+                await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
                     "goals": [],
                     "game_id": 0,
                 }})
