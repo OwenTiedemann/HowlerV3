@@ -94,10 +94,18 @@ class NationalHockeyLeague(commands.Cog):
         goalsToDate = goal['goalsToDate']
         headshotUrl = goal['headshot']
 
+        assists = []
+        if 'assists' in goal:
+            assists.append(goal['assists'][0])
+
         description = f'{homeScore} - {awayScore} {teamAbbrev}'
 
         if teamAbbrev == 'ARI':
             description += f'\n He has {goalsToDate} goals this season!'
+
+        description += '\n'
+        for assist in assists:
+            description += f'Assist: {assist["firstName"]} {assist["lastName"]} ({assist["assistsToDate"]})'
 
         embed = discord.Embed(
             title=f'Goal scored by {goal["firstName"]} {goal["lastName"]}',
