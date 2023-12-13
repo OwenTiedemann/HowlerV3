@@ -65,6 +65,26 @@ class NationalHockeyLeague(commands.Cog):
                 self.are_we_home = False
                 await self.generate_schedule_embed(awayTeam, homeTeam, game)
 
+
+    async def reset_after_failure(self):
+        today = datetime.now(EST).strftime('%Y-%m-%d')
+        response = await fetch(f'https://api-web.nhle.com/v1/schedule/{today}')
+        todaysGames = response['gameWeek'][0]['games']
+        for game in todaysGames:
+            awayTeam = game['awayTeam']
+            homeTeam = game['homeTeam']
+
+            if homeTeam['abbrev'] == 'ARI':
+                self.game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
+                self.game_id = game['id']
+                self.postedMorningMessage = True
+                return
+            elif awayTeam['abbrev'] == 'ARI':
+                self.game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
+                self.game_id = game['id']
+                self.postedMorningMessage = True
+                return
+
     async def post_goal(self, goal):
         description = ''
 
@@ -110,12 +130,18 @@ class NationalHockeyLeague(commands.Cog):
             return
 
         if self.game_time is None:
-            return
+            if not self.postedMorningMessage:
+                await self.reset_after_failure()
+            else:
+                return
 
         if self.isNowInTimePeriod(self.game_time, nineAM, datetime.now(tz=EST)):
             print('Inside the game loop now')
             game = await fetch(f'https://api-web.nhle.com/v1/gamecenter/{self.game_id}/landing')
             check_goals = []
+
+            if 'summary' not in game:
+                return
 
             if 'scoring' not in game['summary']:
                 return
