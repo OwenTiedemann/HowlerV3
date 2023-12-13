@@ -3,13 +3,12 @@ from discord.ext import tasks, commands
 from datetime import datetime
 import pytz
 import aiohttp
-
 from iso8601 import iso8601
 
 EST = pytz.timezone('US/Eastern')
 UTC = pytz.timezone('UTC')
 
-CHANNEL_ID = 798968918692724736
+CHANNEL_ID = 870019149743669288
 
 
 async def fetch(url):
@@ -22,6 +21,7 @@ class NationalHockeyLeague(commands.Cog):
     def __init__(self, bot):
         print("Registering National Hockey League Cog")
         self.bot = bot
+        self.game_tracker = bot.game_tracker_database['game_tracker']
         self.postedMorningMessage = False
         self.game_time = None
         self.game_loop.start()
@@ -31,8 +31,12 @@ class NationalHockeyLeague(commands.Cog):
         self.are_we_home = False
 
     async def generate_schedule_embed(self, team, enemy, game):
-        self.game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
-        self.game_id = game['id']
+        game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
+        game_id = game['id']
+        await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+            "gameTime": game_time.isoformat(),
+            "game_id": game_id
+        }})
         enemyName = enemy["placeName"]["default"]
         embed = discord.Embed(
             title="It's Game Day!!!",
@@ -65,7 +69,6 @@ class NationalHockeyLeague(commands.Cog):
                 self.are_we_home = False
                 await self.generate_schedule_embed(awayTeam, homeTeam, game)
 
-
     async def reset_after_failure(self):
         today = datetime.now(EST).strftime('%Y-%m-%d')
         response = await fetch(f'https://api-web.nhle.com/v1/schedule/{today}')
@@ -75,14 +78,22 @@ class NationalHockeyLeague(commands.Cog):
             homeTeam = game['homeTeam']
 
             if homeTeam['abbrev'] == 'ARI':
-                self.game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
-                self.game_id = game['id']
-                self.postedMorningMessage = True
+                game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
+                game_id = game['id']
+                await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+                    "gameTime": game_time.isoformat(),
+                    "game_id": game_id,
+                    "postedMorningMessage": True
+                }})
                 return
             elif awayTeam['abbrev'] == 'ARI':
-                self.game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
-                self.game_id = game['id']
-                self.postedMorningMessage = True
+                game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
+                game_id = game['id']
+                await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+                    "gameTime": game_time.isoformat(),
+                    "game_id": game_id,
+                    "postedMorningMessage": True
+                }})
                 return
 
     async def post_goal(self, goal):
@@ -95,7 +106,7 @@ class NationalHockeyLeague(commands.Cog):
         headshotUrl = goal['headshot']
 
         assists = []
-        if 'assists' in goal:
+        if 'assists' in goal and len(goal['assists']) > 0:
             assists.append(goal['assists'][0])
 
         description = f'{homeScore} - {awayScore} {teamAbbrev}'
@@ -115,6 +126,26 @@ class NationalHockeyLeague(commands.Cog):
         channel = self.bot.get_channel(CHANNEL_ID)
         await channel.send(embed=embed)
 
+    async def reset_db_values(self):
+        await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+            "postedMorningMessage": False,
+            'gameTime': None,
+            'game_id': 0,
+            'goals': []
+        }})
+
+    async def retrieve_db_values(self):
+        db_values = await self.game_tracker.find_one()
+        if db_values['gameTime'] == '':
+            self.game_time = None
+        else:
+            gameTime = iso8601.parse_date(db_values['gameTime']).replace(tzinfo=UTC).astimezone(EST)
+            self.game_time = gameTime
+
+        self.postedMorningMessage = db_values['postedMorningMessage']
+        self.game_id = db_values['game_id']
+        self.goals = db_values['goals']
+
     @tasks.loop(seconds=30)
     async def game_loop(self):
         currentDay = datetime.now().day
@@ -124,18 +155,19 @@ class NationalHockeyLeague(commands.Cog):
         tenAM = datetime(currentYear, currentMonth, currentDay, hour=10, minute=0, second=0, tzinfo=EST)
 
         if self.isNowInTimePeriod(nineAM, tenAM, datetime.now(tz=EST)):
-            self.postedMorningMessage = False
-            self.game_time = None
-            self.game_id = None
-            self.goals = []
+            await self.reset_db_values()
             return
 
         oneAfterTen = datetime(currentYear, currentMonth, currentDay, hour=10, minute=0, second=45, tzinfo=EST)
 
         if self.isNowInTimePeriod(tenAM, oneAfterTen, datetime.now(tz=EST)):
-            self.postedMorningMessage = True
+            await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+                "postedMorningMessage": True,
+            }})
             await self.post_game()
             return
+
+        await self.retrieve_db_values()
 
         if self.game_time is None:
             if not self.postedMorningMessage:
@@ -163,10 +195,15 @@ class NationalHockeyLeague(commands.Cog):
             if len(check_goals) > len(self.goals):
                 self.goals = check_goals
                 await self.post_goal(self.goals[-1])
+                await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+                    "goals": self.goals
+                }})
 
             if game['gameState'] == 'FINAL':
-                self.game_id = None
-                self.goals = []
+                await self.game_tracker.update_one({"_id": "1"}, {"$set": {
+                    "goals": [],
+                    "game_id": 0,
+                }})
 
     @game_loop.before_loop
     async def before_game_loop(self):

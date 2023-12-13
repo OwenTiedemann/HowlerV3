@@ -44,6 +44,7 @@ database_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_TOKEN)
 client.custom_commands_collection = database_client['commands']['custom']
 client.trivia_database = database_client['database']
 client.reaction_event_database = database_client['reactionevents']
+client.game_tracker_database = database_client['game_tracker']
 
 client.publitio_api = PublitioAPI(PUBLITIO_KEY, PUBLITIO_SECRET)
 client.reaction_events = []
