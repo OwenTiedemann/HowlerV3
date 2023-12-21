@@ -227,12 +227,19 @@ class NationalHockeyLeague(commands.Cog):
 
         highlights_string = ''
 
+        homeTeam = game['homeTeam']['abbrev']
+        awayTeam = game['awayTeam']['abbrev']
+
         if game['gameState'] == 'FINAL' or game['gameState'] == 'OFF':
             for period in game['summary']['scoring']:
                 if 'goals' not in period:
                     continue
                 for goal in period['goals']:
-                    highlights_string += f'[{goal["name"]}({goal["goalsToDate"]}) {goal["shotType"]} shot - assists: '
+                    if goal['teamAbbrev'] == homeTeam:
+                        score = goal['homeScore']
+                    else:
+                        score = goal['awayScore']
+                    highlights_string += f'[{goal["teamAbbrev"]} ({score}) - {goal["name"]}({goal["goalsToDate"]}) {goal["shotType"]} shot - assists: '
                     if 'assists' in goal:
                         for assist in goal['assists']:
                             highlights_string += f'{assist["firstName"]} {assist["lastName"]} ({assist["assistsToDate"]}) '
