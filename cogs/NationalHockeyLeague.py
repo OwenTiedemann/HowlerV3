@@ -1,6 +1,6 @@
 import discord
 from discord.ext import tasks, commands
-from datetime import datetime
+from datetime import datetime, time
 import pytz
 import aiohttp
 from iso8601 import iso8601
@@ -29,6 +29,7 @@ class NationalHockeyLeague(commands.Cog):
         self.game_id = None
         self.goals = []
         self.are_we_home = False
+        self.morning_loop.start()
 
     async def generate_schedule_embed(self, team, enemy, game):
         game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
@@ -113,7 +114,7 @@ class NationalHockeyLeague(commands.Cog):
         description = f'{homeScore} - {awayScore} {teamAbbrev}'
 
         if teamAbbrev == 'ARI':
-            description += f'\n He has {goalsToDate} goals this season!'
+            description += f'\nHe has {goalsToDate} goals this season!'
 
         description += '\n'
         for assist in assists:
@@ -147,6 +148,10 @@ class NationalHockeyLeague(commands.Cog):
         self.game_id = db_values['game_id']
         self.goals = db_values['goals']
 
+    @tasks.loop(time=time(hour=15))
+    async def morning_loop(self):
+        await self.post_game()
+
     @tasks.loop(seconds=15)
     async def game_loop(self):
         if self.game_loop.current_loop % 10 == 0:
@@ -156,26 +161,11 @@ class NationalHockeyLeague(commands.Cog):
         currentMonth = datetime.now().month
         currentYear = datetime.now().year
         nineAM = datetime(currentYear, currentMonth, currentDay, hour=9, minute=0, second=0, tzinfo=EST)
-        tenAM = datetime(currentYear, currentMonth, currentDay, hour=10, minute=0, second=0, tzinfo=EST)
-
-        if self.isNowInTimePeriod(nineAM, tenAM, datetime.now(tz=EST)):
-            await self.reset_db_values()
-            return
-
-        oneAfterTen = datetime(currentYear, currentMonth, currentDay, hour=10, minute=0, second=45, tzinfo=EST)
-
-        if self.isNowInTimePeriod(tenAM, oneAfterTen, datetime.now(tz=EST)):
-            await self.post_game()
-            return
 
         await self.retrieve_db_values()
 
         if self.game_time is None:
-            if not self.postedMorningMessage:
-                await self.post_game()
-                return
-            else:
-                return
+            return
 
         if self.isNowInTimePeriod(self.game_time, nineAM, datetime.now(tz=EST)):
             print('Inside the game loop now')
@@ -212,6 +202,83 @@ class NationalHockeyLeague(commands.Cog):
         print('waiting...')
         await self.bot.wait_until_ready()
 
+    @commands.command()
+    async def post_goals(self, ctx, year: int, month: int, day: int):
+        date = datetime(year=year, month=month, day=day).strftime('%Y-%m-%d')
+        response = await fetch(f'https://api-web.nhle.com/v1/schedule/{date}')
+        days_games = response['gameWeek'][0]['games']
+        highlight_game_id = 0
+        for game in days_games:
+            awayTeam = game['awayTeam']
+            homeTeam = game['homeTeam']
+
+            if homeTeam['abbrev'] == 'ARI':
+                highlight_game_id = game['id']
+                break
+            elif awayTeam['abbrev'] == 'ARI':
+                highlight_game_id = game['id']
+                break
+
+        if highlight_game_id == 0:
+            ctx.send('No arizona games that day')
+            return
+
+        game = await fetch(f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing')
+
+        highlights_string = ''
+
+        if game['gameState'] == 'FINAL' or game['gameState'] == 'OFF':
+            for period in game['summary']['scoring']:
+                if 'goals' not in period:
+                    continue
+                for goal in period['goals']:
+                    highlights_string += f'[{goal["name"]}({goal["goalsToDate"]}) {goal["shotType"]} shot - assists: '
+                    if 'assists' in goal:
+                        for assist in goal['assists']:
+                            highlights_string += f'{assist["firstName"]} {assist["lastName"]} ({assist["assistsToDate"]}) '
+                    highlights_string += "]"
+                    highlights_string += f'(<https://players.brightcove.net/6415718365001/EXtG1xJ7H_default/index.html?videoId={goal["highlightClip"]}>)\n'
+
+            await ctx.send(highlights_string)
+            return
+
+        await ctx.send('oopsie didnt find anything blame bert')
+
+    @commands.command()
+    async def post_recap(self, ctx, year: int, month: int, day: int):
+        date = datetime(year=year, month=month, day=day).strftime('%Y-%m-%d')
+        response = await fetch(f'https://api-web.nhle.com/v1/schedule/{date}')
+        days_games = response['gameWeek'][0]['games']
+        highlight_game_id = 0
+        for game in days_games:
+            awayTeam = game['awayTeam']
+            homeTeam = game['homeTeam']
+
+            if homeTeam['abbrev'] == 'ARI':
+                highlight_game_id = game['id']
+                break
+            elif awayTeam['abbrev'] == 'ARI':
+                highlight_game_id = game['id']
+                break
+
+        if highlight_game_id == 0:
+            ctx.send('No arizona games that day')
+            return
+
+        game = await fetch(f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing')
+
+        highlights_string = ''
+
+        if game['gameState'] == 'FINAL' or game['gameState'] == 'OFF':
+            highlights_string += f'[{game["homeTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["home"]}) - {game["awayTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["away"]})]'
+            highlights_string += f'(https://players.brightcove.net/6415718365001/EXtG1xJ7H_default/index.html?videoId={game["summary"]["gameVideo"]["condensedGame"]})'
+
+            await ctx.send(highlights_string)
+            return
+
+        await ctx.send('oopsie didnt find anything blame bert')
+
+
 '''
     async def posthighlights(self, ctx):
         game = await fetch(f'https://api-web.nhle.com/v1/gamecenter/{self.game_id}/landing')
@@ -234,7 +301,6 @@ class NationalHockeyLeague(commands.Cog):
                 response = await fetch(url)
                 print(response)
 '''
-
 
 
 async def setup(bot):
