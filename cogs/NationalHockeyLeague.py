@@ -152,7 +152,7 @@ class NationalHockeyLeague(commands.Cog):
     async def morning_loop(self):
         await self.post_game()
 
-    @tasks.loop(seconds=15)
+    @tasks.loop(seconds=30)
     async def game_loop(self):
         if self.game_loop.current_loop % 10 == 0:
             print(f'Game Loop iteration: ' + str(self.game_loop.current_loop))
@@ -203,7 +203,7 @@ class NationalHockeyLeague(commands.Cog):
         await self.bot.wait_until_ready()
 
     @commands.command()
-    async def post_goals(self, ctx, year: int, month: int, day: int):
+    async def goals(self, ctx, year: int, month: int, day: int):
         date = datetime(year=year, month=month, day=day).strftime('%Y-%m-%d')
         response = await fetch(f'https://api-web.nhle.com/v1/schedule/{date}')
         days_games = response['gameWeek'][0]['games']
@@ -252,7 +252,7 @@ class NationalHockeyLeague(commands.Cog):
         await ctx.send('oopsie didnt find anything blame bert')
 
     @commands.command()
-    async def post_recap(self, ctx, year: int, month: int, day: int):
+    async def recap(self, ctx, year: int, month: int, day: int):
         date = datetime(year=year, month=month, day=day).strftime('%Y-%m-%d')
         response = await fetch(f'https://api-web.nhle.com/v1/schedule/{date}')
         days_games = response['gameWeek'][0]['games']
@@ -284,30 +284,6 @@ class NationalHockeyLeague(commands.Cog):
             return
 
         await ctx.send('oopsie didnt find anything blame bert')
-
-
-'''
-    async def posthighlights(self, ctx):
-        game = await fetch(f'https://api-web.nhle.com/v1/gamecenter/{self.game_id}/landing')
-        if 'summary' not in game:
-            return
-
-        if 'scoring' not in game['summary']:
-            return
-
-        for period in game['summary']['scoring']:
-            if 'goals' not in period:
-                continue
-            for goal in period['goals']:
-                print(goal)
-                if 'highlightClip' not in goal:
-                    continue
-                highlight_id = goal['highlightClip']
-                url = GOOGLE_SEARCH_URL + str(highlight_id)
-                print(url)
-                response = await fetch(url)
-                print(response)
-'''
 
 
 async def setup(bot):
