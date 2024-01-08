@@ -305,7 +305,7 @@ class NationalHockeyLeague(commands.Cog):
                 break
 
         if highlight_game_id == 0:
-            ctx.send('No arizona games that day')
+            await ctx.send('No arizona games that day')
             return
 
         url = f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing'
