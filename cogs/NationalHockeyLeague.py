@@ -11,11 +11,31 @@ UTC = pytz.timezone('UTC')
 CHANNEL_ID = 798968918692724736
 DATABASE_RECORD = "1"
 
+HIGHLIGHT_VIDEO_URL = 'https://players.brightcove.net/6415718365001/EXtG1xJ7H_default/index.html?videoId'
+
 
 async def fetch(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             return await response.json()
+
+
+def default(dictionary):
+    if 'cs' in dictionary:
+        return dictionary['cs']
+
+    if 'sk' in dictionary:
+        return dictionary['sk']
+
+    if 'default' in dictionary:
+        return dictionary['default']
+
+
+def shotType(goal):
+    if 'shotType' in goal:
+        return f'{goal["shotType"]} shot'
+
+    return ''
 
 
 class NationalHockeyLeague(commands.Cog):
@@ -99,12 +119,10 @@ class NationalHockeyLeague(commands.Cog):
                 return
 
     async def post_goal(self, goal):
-        description = ''
-
         homeScore = goal['homeScore']
         awayScore = goal['awayScore']
-        teamAbbrev = goal['teamAbbrev']
-        goalsToDate = goal['goalsToDate']
+        teamAbbrev = default(goal['teamAbbrev'])
+        goalsToDate = default(goal['goalsToDate'])
         headshotUrl = goal['headshot']
 
         assists = []
@@ -118,10 +136,14 @@ class NationalHockeyLeague(commands.Cog):
 
         description += '\n'
         for assist in assists:
-            description += f'Assist: {assist["firstName"]} {assist["lastName"]} ({assist["assistsToDate"]})'
+            assistName = default(assist['name'])
+            description += f'Assist: {assistName} ({assist["assistsToDate"]})'
+
+        goalFirstName = default(goal['firstName'])
+        goalLastName = default(goal['lastName'])
 
         embed = discord.Embed(
-            title=f'Goal scored by {goal["firstName"]} {goal["lastName"]}',
+            title=f'Goal scored by {goalFirstName} {goalLastName}',
             description=description,
         )
         embed.set_thumbnail(url=headshotUrl)
@@ -239,12 +261,26 @@ class NationalHockeyLeague(commands.Cog):
                         score = goal['homeScore']
                     else:
                         score = goal['awayScore']
-                    highlights_string += f'[{goal["teamAbbrev"]} ({score}) - {goal["name"]}({goal["goalsToDate"]}) {goal["shotType"]} shot - assists: '
-                    if 'assists' in goal:
+
+                    teamAbbrev = default(goal['teamAbbrev'])
+                    name = default(goal['name'])
+                    shotTypeString = shotType(goal)
+
+                    if "highlightClip" in goal:
+                        highlights_string += f'[{teamAbbrev} ({score}) - {name}({goal["goalsToDate"]}) {shotTypeString}'
+                    else:
+                        highlights_string += f'{teamAbbrev} ({score}) - {name}({goal["goalsToDate"]}) {shotTypeString}'
+                    if 'assists' in goal and len(goal['assists']) > 0:
+                        highlights_string += " - assists: "
                         for assist in goal['assists']:
-                            highlights_string += f'{assist["firstName"]} {assist["lastName"]} ({assist["assistsToDate"]}) '
-                    highlights_string += "]"
-                    highlights_string += f'(<https://players.brightcove.net/6415718365001/EXtG1xJ7H_default/index.html?videoId={goal["highlightClip"]}>)\n'
+                            assistName = default(assist['name'])
+                            highlights_string += f'{assistName} ({assist["assistsToDate"]}) '
+
+                    if "highlightClip" in goal:
+                        highlights_string += "]"
+                        highlights_string += f'(<{HIGHLIGHT_VIDEO_URL}={goal["highlightClip"]}>)\n'
+                    else:
+                        highlights_string += '\n'
 
             await ctx.send(highlights_string)
             return
@@ -272,13 +308,18 @@ class NationalHockeyLeague(commands.Cog):
             ctx.send('No arizona games that day')
             return
 
-        game = await fetch(f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing')
+        url = f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing'
+        game = await fetch(url)
 
         highlights_string = ''
 
         if game['gameState'] == 'FINAL' or game['gameState'] == 'OFF':
             highlights_string += f'[{game["homeTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["home"]}) - {game["awayTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["away"]})]'
-            highlights_string += f'(https://players.brightcove.net/6415718365001/EXtG1xJ7H_default/index.html?videoId={game["summary"]["gameVideo"]["condensedGame"]})'
+
+            if 'condensedGame' in game["summary"]["gameVideo"]:
+                highlights_string += f'({HIGHLIGHT_VIDEO_URL}={game["summary"]["gameVideo"]["condensedGame"]})'
+            elif 'threeMinRecap' in game["summary"]["gameVideo"]:
+                highlights_string += f'({HIGHLIGHT_VIDEO_URL}={game["summary"]["gameVideo"]["threeMinRecap"]})'
 
             await ctx.send(highlights_string)
             return
