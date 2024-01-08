@@ -227,7 +227,9 @@ class NationalHockeyLeague(commands.Cog):
     @commands.command()
     async def goals(self, ctx, year: int, month: int, day: int):
         date = datetime(year=year, month=month, day=day).strftime('%Y-%m-%d')
-        response = await fetch(f'https://api-web.nhle.com/v1/schedule/{date}')
+        url=f'https://api-web.nhle.com/v1/schedule/{date}'
+        print(url)
+        response = await fetch(url)
         days_games = response['gameWeek'][0]['games']
         highlight_game_id = 0
         for game in days_games:
@@ -245,7 +247,9 @@ class NationalHockeyLeague(commands.Cog):
             ctx.send('No arizona games that day')
             return
 
-        game = await fetch(f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing')
+        url=f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing'
+        print(url)
+        game = await fetch(url)
 
         highlights_string = ''
 
@@ -290,7 +294,9 @@ class NationalHockeyLeague(commands.Cog):
     @commands.command()
     async def recap(self, ctx, year: int, month: int, day: int):
         date = datetime(year=year, month=month, day=day).strftime('%Y-%m-%d')
-        response = await fetch(f'https://api-web.nhle.com/v1/schedule/{date}')
+        url = f'https://api-web.nhle.com/v1/schedule/{date}'
+        print(url)
+        response = await fetch(url)
         days_games = response['gameWeek'][0]['games']
         highlight_game_id = 0
         for game in days_games:
