@@ -84,10 +84,10 @@ class NationalHockeyLeague(commands.Cog):
             awayTeam = game['awayTeam']
             homeTeam = game['homeTeam']
 
-            if homeTeam['abbrev'] == 'ARI':
+            if homeTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
                 self.are_we_home = True
                 await self.generate_schedule_embed(homeTeam, awayTeam, game)
-            elif awayTeam['abbrev'] == 'ARI':
+            elif awayTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
                 self.are_we_home = False
                 await self.generate_schedule_embed(awayTeam, homeTeam, game)
 
@@ -99,7 +99,7 @@ class NationalHockeyLeague(commands.Cog):
             awayTeam = game['awayTeam']
             homeTeam = game['homeTeam']
 
-            if homeTeam['abbrev'] == 'ARI':
+            if homeTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
                 game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
                 game_id = game['id']
                 await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
@@ -108,7 +108,7 @@ class NationalHockeyLeague(commands.Cog):
                     "postedMorningMessage": True
                 }})
                 return
-            elif awayTeam['abbrev'] == 'ARI':
+            elif awayTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
                 game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
                 game_id = game['id']
                 await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
@@ -131,7 +131,7 @@ class NationalHockeyLeague(commands.Cog):
 
         description = f'{homeScore} - {awayScore} {teamAbbrev}'
 
-        if teamAbbrev == 'ARI':
+        if teamAbbrev == 'ARI' or teamAbbrev == 'PHX':
             description += f'\nHe has {goalsToDate} goals this season!'
 
         description += '\n'
@@ -236,10 +236,10 @@ class NationalHockeyLeague(commands.Cog):
             awayTeam = game['awayTeam']
             homeTeam = game['homeTeam']
 
-            if homeTeam['abbrev'] == 'ARI':
+            if homeTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
                 highlight_game_id = game['id']
                 break
-            elif awayTeam['abbrev'] == 'ARI':
+            elif awayTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
                 highlight_game_id = game['id']
                 break
 
@@ -303,10 +303,10 @@ class NationalHockeyLeague(commands.Cog):
             awayTeam = game['awayTeam']
             homeTeam = game['homeTeam']
 
-            if homeTeam['abbrev'] == 'ARI':
+            if homeTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
                 highlight_game_id = game['id']
                 break
-            elif awayTeam['abbrev'] == 'ARI':
+            elif awayTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
                 highlight_game_id = game['id']
                 break
 
