@@ -314,13 +314,17 @@ class NationalHockeyLeague(commands.Cog):
             await ctx.send('No arizona games that day')
             return
 
-        url = f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing'
+        url=f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing'
+        print(url)
         game = await fetch(url)
 
         highlights_string = ''
 
         if game['gameState'] == 'FINAL' or game['gameState'] == 'OFF':
             highlights_string += f'[{game["homeTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["home"]}) - {game["awayTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["away"]})]'
+
+            if 'gameVideo' not in game['summary']:
+                await ctx.send('no vids sorry\n' + f'{game["homeTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["home"]}) - {game["awayTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["away"]})')
 
             if 'condensedGame' in game["summary"]["gameVideo"]:
                 highlights_string += f'({HIGHLIGHT_VIDEO_URL}={game["summary"]["gameVideo"]["condensedGame"]})'
