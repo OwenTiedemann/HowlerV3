@@ -325,6 +325,7 @@ class NationalHockeyLeague(commands.Cog):
 
             if 'gameVideo' not in game['summary']:
                 await ctx.send('no vids sorry\n' + f'{game["homeTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["home"]}) - {game["awayTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["away"]})')
+                return
 
             if 'condensedGame' in game["summary"]["gameVideo"]:
                 highlights_string += f'({HIGHLIGHT_VIDEO_URL}={game["summary"]["gameVideo"]["condensedGame"]})'
