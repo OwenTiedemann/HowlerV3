@@ -122,7 +122,7 @@ class NationalHockeyLeague(commands.Cog):
         homeScore = goal['homeScore']
         awayScore = goal['awayScore']
         teamAbbrev = default(goal['teamAbbrev'])
-        goalsToDate = default(goal['goalsToDate'])
+        goalsToDate = goal['goalsToDate']
         headshotUrl = goal['headshot']
 
         assists = []
