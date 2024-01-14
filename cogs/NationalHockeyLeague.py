@@ -117,36 +117,31 @@ class NationalHockeyLeague(commands.Cog):
                 self.are_we_home = False
                 await self.generate_schedule_embed(awayTeam, homeTeam, game)
 
-    async def post_goal(self, goal):
-        homeScore = goal['homeScore']
-        awayScore = goal['awayScore']
-        teamAbbrev = default(goal['teamAbbrev'])
-        goalsToDate = goal['goalsToDate']
-        headshotUrl = goal['headshot']
-
-        assists = []
-        if 'assists' in goal and len(goal['assists']) > 0:
-            assists.append(goal['assists'][0])
-
-        description = f'{homeScore} - {awayScore} {teamAbbrev}'
-        footer = f'{goal["strength"].upper()} goal scored at {goal["timeInPeriod"]} of {periodDescription(goal["period"])}'
-        if teamAbbrev == 'ARI' or teamAbbrev == 'PHX':
-            description += f'\nHe has {goalsToDate} goals this season!'
-
-        description += '\n'
-        for assist in assists:
-            assistName = default(assist['name'])
-            description += f'Assist: {assistName} ({assist["assistsToDate"]})'
-
-        goalFirstName = default(goal['firstName'])
-        goalLastName = default(goal['lastName'])
+    async def post_goal(self, goal, homeAbbrev, awayAbbrev):
+        assistString = ''
+        if len(goal['assists']) == 1:
+            assistString += f'{goal["assists"][0]["name"]} ({goal["assists"][0]["assistsToDate"]})'
+        elif len(goal['assists']) == 2:
+            assistString += f'{default(goal["assists"][0]["name"])} ({goal["assists"][0]["assistsToDate"]}), '
+            assistString += f'{default(goal["assists"][1]["name"])} ({goal["assists"][1]["assistsToDate"]})'
 
         embed = discord.Embed(
-            title=f'Goal scored by {goalFirstName} {goalLastName}',
-            description=description,
+            title=f'{default(goal["name"])} ({goal["goalsToDate"]})',
+            description=assistString
         )
+        if default(goal['teamAbbrev']) == homeAbbrev:
+            homeScore = f'*{goal["homeScore"]}*'
+            awayScore = f'{goal["awayScore"]}'
+        else:
+            homeScore = f'{goal["homeScore"]}'
+            awayScore = f'*{goal["awayScore"]}*'
+
+        embed.add_field(name=awayAbbrev, value=awayScore, inline=True)
+        embed.add_field(name=homeAbbrev, value=homeScore, inline=True)
+        footer = f'{goal["strength"].upper()} goal at {goal["timeInPeriod"]} of {periodDescription(1)}'
         embed.set_footer(text=footer)
-        embed.set_thumbnail(url=headshotUrl)
+        embed.set_thumbnail(url=goal['headshot'])
+
         channel = self.bot.get_channel(CHANNEL_ID)
         await channel.send(embed=embed)
 
@@ -217,6 +212,8 @@ class NationalHockeyLeague(commands.Cog):
             print('Inside the game loop now')
             game = await fetch(f'https://api-web.nhle.com/v1/gamecenter/{self.game_id}/landing')
             check_goals = []
+            homeTeam = game['homeTeam']['abbrev']
+            awayTeam = game['awayTeam']['abbrev']
 
             if 'summary' not in game:
                 return
@@ -233,7 +230,7 @@ class NationalHockeyLeague(commands.Cog):
 
             if len(check_goals) > len(self.goals):
                 self.goals = check_goals
-                await self.post_goal(self.goals[-1])
+                await self.post_goal(self.goals[-1], homeAbbrev=homeTeam, awayAbbrev=awayTeam)
                 await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
                     "goals": self.goals
                 }})
@@ -368,6 +365,8 @@ class NationalHockeyLeague(commands.Cog):
             return
 
         await ctx.send('oopsie didnt find anything blame bert')
+
+
 
 
 async def setup(bot):
