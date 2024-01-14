@@ -231,7 +231,7 @@ class NationalHockeyLeague(commands.Cog):
                     goal["period"] = period['period']
                     check_goals.append(goal)
 
-            if len(check_goals) > len(self.goals):
+            if len(check_goals) != len(self.goals):
                 self.goals = check_goals
                 await self.post_goal(self.goals[-1])
                 await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
