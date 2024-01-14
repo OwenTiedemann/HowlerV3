@@ -28,10 +28,12 @@ async def fetch(url):
         async with session.get(url) as response:
             return await response.json()
 
+
 async def fetch_html(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             return await response.read()
+
 
 def default(dictionary):
     if 'cs' in dictionary:
@@ -67,7 +69,6 @@ class NationalHockeyLeague(commands.Cog):
         print("Registering National Hockey League Cog")
         self.bot = bot
         self.game_tracker = bot.game_tracker_database['game_tracker']
-        self.postedMorningMessage = False
         self.game_time = None
         self.game_loop.start()
         self.game_id = None
@@ -81,7 +82,6 @@ class NationalHockeyLeague(commands.Cog):
         game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
         game_id = game['id']
         await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
-            "postedMorningMessage": True,
             "gameTime": game_time.isoformat(),
             "game_id": game_id
         }})
@@ -116,33 +116,6 @@ class NationalHockeyLeague(commands.Cog):
             elif awayTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
                 self.are_we_home = False
                 await self.generate_schedule_embed(awayTeam, homeTeam, game)
-
-    async def reset_after_failure(self):
-        today = datetime.now(EST).strftime('%Y-%m-%d')
-        response = await fetch(f'https://api-web.nhle.com/v1/schedule/{today}')
-        todaysGames = response['gameWeek'][0]['games']
-        for game in todaysGames:
-            awayTeam = game['awayTeam']
-            homeTeam = game['homeTeam']
-
-            if homeTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
-                game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
-                game_id = game['id']
-                await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
-                    "gameTime": game_time.isoformat(),
-                    "game_id": game_id,
-                    "postedMorningMessage": True
-                }})
-                return
-            elif awayTeam['abbrev'] == 'ARI' or homeTeam['abbrev'] == 'PHX':
-                game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
-                game_id = game['id']
-                await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
-                    "gameTime": game_time.isoformat(),
-                    "game_id": game_id,
-                    "postedMorningMessage": True
-                }})
-                return
 
     async def post_goal(self, goal):
         homeScore = goal['homeScore']
@@ -179,10 +152,10 @@ class NationalHockeyLeague(commands.Cog):
 
     async def reset_db_values(self):
         await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
-            "postedMorningMessage": False,
             'gameTime': None,
             'game_id': 0,
-            'goals': []
+            'goals': [],
+            'preview_posted': False
         }})
 
     async def retrieve_db_values(self):
@@ -193,13 +166,13 @@ class NationalHockeyLeague(commands.Cog):
             gameTime = iso8601.parse_date(db_values['gameTime'])
             self.game_time = gameTime
 
-        self.postedMorningMessage = db_values['postedMorningMessage']
         self.game_id = db_values['game_id']
         self.goals = db_values['goals']
         self.preview_posted = db_values['preview_posted']
 
     @tasks.loop(time=time(hour=15))
     async def morning_loop(self):
+        await self.reset_db_values()
         await self.post_game()
 
     @tasks.loop(minutes=30)
@@ -279,7 +252,7 @@ class NationalHockeyLeague(commands.Cog):
     @commands.command()
     async def goals(self, ctx, year: int, month: int, day: int):
         date = datetime(year=year, month=month, day=day).strftime('%Y-%m-%d')
-        url=f'https://api-web.nhle.com/v1/schedule/{date}'
+        url = f'https://api-web.nhle.com/v1/schedule/{date}'
         print(url)
         response = await fetch(url)
         days_games = response['gameWeek'][0]['games']
@@ -299,7 +272,7 @@ class NationalHockeyLeague(commands.Cog):
             ctx.send('No arizona games that day')
             return
 
-        url=f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing'
+        url = f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing'
         print(url)
         game = await fetch(url)
 
@@ -366,7 +339,7 @@ class NationalHockeyLeague(commands.Cog):
             await ctx.send('No arizona games that day')
             return
 
-        url=f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing'
+        url = f'https://api-web.nhle.com/v1/gamecenter/{highlight_game_id}/landing'
         print(url)
         game = await fetch(url)
 
@@ -376,7 +349,8 @@ class NationalHockeyLeague(commands.Cog):
             highlights_string += f'[{game["homeTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["home"]}) - {game["awayTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["away"]})]'
 
             if 'gameVideo' not in game['summary']:
-                await ctx.send('no vids sorry\n' + f'{game["homeTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["home"]}) - {game["awayTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["away"]})')
+                await ctx.send(
+                    'no vids sorry\n' + f'{game["homeTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["home"]}) - {game["awayTeam"]["abbrev"]} ({game["summary"]["linescore"]["totals"]["away"]})')
                 return
 
             if 'condensedGame' in game["summary"]["gameVideo"]:
