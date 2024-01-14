@@ -8,8 +8,8 @@ from iso8601 import iso8601
 EST = pytz.timezone('US/Eastern')
 UTC = pytz.timezone('UTC')
 
-CHANNEL_ID = 870019149743669288
-DATABASE_RECORD = "2"
+CHANNEL_ID = 798968918692724736
+DATABASE_RECORD = "1"
 
 HIGHLIGHT_VIDEO_URL = 'https://players.brightcove.net/6415718365001/EXtG1xJ7H_default/index.html?videoId'
 
