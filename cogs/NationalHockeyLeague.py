@@ -1,15 +1,24 @@
+import os
+
 import discord
 from discord.ext import tasks, commands
 from datetime import datetime, time
 import pytz
 import aiohttp
 from iso8601 import iso8601
+from bs4 import BeautifulSoup
 
 EST = pytz.timezone('US/Eastern')
 UTC = pytz.timezone('UTC')
 
-CHANNEL_ID = 798968918692724736
-DATABASE_RECORD = "1"
+TEST_ENVIRONMENT = os.getenv('HOWLER_TESTING_ENVIRONMENT') == 'true'
+
+if TEST_ENVIRONMENT:
+    CHANNEL_ID = 870019149743669288
+    DATABASE_RECORD = "2"
+else:
+    CHANNEL_ID = 798968918692724736
+    DATABASE_RECORD = "1"
 
 HIGHLIGHT_VIDEO_URL = 'https://players.brightcove.net/6415718365001/EXtG1xJ7H_default/index.html?videoId'
 
@@ -19,6 +28,10 @@ async def fetch(url):
         async with session.get(url) as response:
             return await response.json()
 
+async def fetch_html(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.read()
 
 def default(dictionary):
     if 'cs' in dictionary:
@@ -60,7 +73,9 @@ class NationalHockeyLeague(commands.Cog):
         self.game_id = None
         self.goals = []
         self.are_we_home = False
+        self.preview_posted = False
         self.morning_loop.start()
+        self.preview_loop.start()
 
     async def generate_schedule_embed(self, team, enemy, game):
         game_time = iso8601.parse_date(game['startTimeUTC']).replace(tzinfo=UTC).astimezone(EST)
@@ -181,10 +196,34 @@ class NationalHockeyLeague(commands.Cog):
         self.postedMorningMessage = db_values['postedMorningMessage']
         self.game_id = db_values['game_id']
         self.goals = db_values['goals']
+        self.preview_posted = db_values['preview_posted']
 
     @tasks.loop(time=time(hour=15))
     async def morning_loop(self):
         await self.post_game()
+
+    @tasks.loop(minutes=30)
+    async def preview_loop(self):
+        await self.retrieve_db_values()
+        if self.game_time is None or self.preview_posted == True:
+            return
+        else:
+            response = await fetch_html('https://www.nhl.com/coyotes/news/')
+            today = datetime.now(EST).strftime('%m%d%y')
+            html = BeautifulSoup(response, "html.parser")
+            profiles = []
+            for profile in html.findAll('a'):
+                profile = profile.get('href')
+                profiles.append(profile)
+
+            for profile in profiles:
+                if profile and str(today) in profile:
+                    channel = self.bot.get_channel(CHANNEL_ID)
+                    await channel.send(f'https://www.nhl.com' + profile)
+                    await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
+                        "preview_posted": True
+                    }})
+                    return
 
     @tasks.loop(seconds=30)
     async def game_loop(self):
