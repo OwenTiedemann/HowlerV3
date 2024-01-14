@@ -8,8 +8,8 @@ from iso8601 import iso8601
 EST = pytz.timezone('US/Eastern')
 UTC = pytz.timezone('UTC')
 
-CHANNEL_ID = 798968918692724736
-DATABASE_RECORD = "1"
+CHANNEL_ID = 870019149743669288
+DATABASE_RECORD = "2"
 
 HIGHLIGHT_VIDEO_URL = 'https://players.brightcove.net/6415718365001/EXtG1xJ7H_default/index.html?videoId'
 
@@ -29,6 +29,17 @@ def default(dictionary):
 
     if 'default' in dictionary:
         return dictionary['default']
+
+
+def periodDescription(period):
+    if period == 1:
+        return 'the 1st period'
+    if period == 2:
+        return 'the 2nd period'
+    if period == 3:
+        return 'the 3rd period'
+    if period == 4:
+        return 'overtime'
 
 
 def shotType(goal):
@@ -130,7 +141,7 @@ class NationalHockeyLeague(commands.Cog):
             assists.append(goal['assists'][0])
 
         description = f'{homeScore} - {awayScore} {teamAbbrev}'
-
+        footer = f'{goal["strength"].upper()} goal scored at {goal["timeInPeriod"]} of {periodDescription(goal["period"])}'
         if teamAbbrev == 'ARI' or teamAbbrev == 'PHX':
             description += f'\nHe has {goalsToDate} goals this season!'
 
@@ -146,6 +157,7 @@ class NationalHockeyLeague(commands.Cog):
             title=f'Goal scored by {goalFirstName} {goalLastName}',
             description=description,
         )
+        embed.set_footer(text=footer)
         embed.set_thumbnail(url=headshotUrl)
         channel = self.bot.get_channel(CHANNEL_ID)
         await channel.send(embed=embed)
@@ -204,6 +216,7 @@ class NationalHockeyLeague(commands.Cog):
                 if 'goals' not in period:
                     continue
                 for goal in period['goals']:
+                    goal["period"] = period['period']
                     check_goals.append(goal)
 
             if len(check_goals) > len(self.goals):
