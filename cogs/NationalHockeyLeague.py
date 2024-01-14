@@ -238,6 +238,12 @@ class NationalHockeyLeague(commands.Cog):
                     "goals": self.goals
                 }})
 
+            if len(check_goals) < len(self.goals):
+                self.goals = check_goals
+                await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
+                    "goals": self.goals
+                }})
+
             if game['gameState'] == 'FINAL':
                 await self.game_tracker.update_one({"_id": DATABASE_RECORD}, {"$set": {
                     "goals": [],
