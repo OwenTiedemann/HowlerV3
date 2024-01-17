@@ -138,7 +138,7 @@ class NationalHockeyLeague(commands.Cog):
 
         embed.add_field(name=awayAbbrev, value=awayScore, inline=True)
         embed.add_field(name=homeAbbrev, value=homeScore, inline=True)
-        footer = f'{goal["strength"].upper()} goal at {goal["timeInPeriod"]} of {periodDescription(1)}'
+        footer = f'{goal["strength"].upper()} goal at {goal["timeInPeriod"]} of {periodDescription(goal["period"])}'
         embed.set_footer(text=footer)
         embed.set_thumbnail(url=goal['headshot'])
 
