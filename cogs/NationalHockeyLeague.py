@@ -120,7 +120,7 @@ class NationalHockeyLeague(commands.Cog):
     async def post_goal(self, goal, homeAbbrev, awayAbbrev):
         assistString = ''
         if len(goal['assists']) == 1:
-            assistString += f'{goal["assists"][0]["name"]} ({goal["assists"][0]["assistsToDate"]})'
+            assistString += f'{default(goal["assists"][0]["name"])} ({goal["assists"][0]["assistsToDate"]})'
         elif len(goal['assists']) == 2:
             assistString += f'{default(goal["assists"][0]["name"])} ({goal["assists"][0]["assistsToDate"]}), '
             assistString += f'{default(goal["assists"][1]["name"])} ({goal["assists"][1]["assistsToDate"]})'
