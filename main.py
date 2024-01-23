@@ -11,7 +11,12 @@ import functools
 
 load_dotenv()
 
-PREFIXES = os.environ['PREFIXES'].split(', ')
+TEST_ENVIRONMENT = os.getenv('HOWLER_TESTING_ENVIRONMENT') == 'true'
+
+if TEST_ENVIRONMENT:
+    PREFIXES = os.environ['PREFIXES'].split(', ')
+else:
+    PREFIXES = ['howler ', 'Howler']
 DISCORD_TOKEN = os.environ['DISCORD_TOKEN']
 MONGO_TOKEN = os.environ['MONGO_TOKEN']
 PUBLITIO_KEY = os.environ['PUBLITIO_KEY']
