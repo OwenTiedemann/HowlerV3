@@ -10,20 +10,12 @@ from PIL import Image, ImageDraw, ImageFont
 import functools
 
 load_dotenv()
-TEST_ENVIRONMENT = os.getenv('HOWLER_TESTING_ENVIRONMENT') == 'true'
 
-if TEST_ENVIRONMENT:
-    PREFIXES = ['$', '%']
-    DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-    MONGO_TOKEN = os.getenv('MONGO_TOKEN')
-    PUBLITIO_KEY = os.getenv('PUBLITIO_KEY')
-    PUBLITIO_SECRET = os.getenv('PUBLITIO_SECRET')
-else:
-    PREFIXES = ['howler ', 'Howler ']
-    DISCORD_TOKEN = os.environ['DISCORD_TOKEN']
-    MONGO_TOKEN = os.environ['MONGO_TOKEN']
-    PUBLITIO_KEY = os.environ['PUBLITIO_KEY']
-    PUBLITIO_SECRET = os.environ['PUBLITIO_SECRET']
+PREFIXES = os.environ['PREFIXES'].split(', ')
+DISCORD_TOKEN = os.environ['DISCORD_TOKEN']
+MONGO_TOKEN = os.environ['MONGO_TOKEN']
+PUBLITIO_KEY = os.environ['PUBLITIO_KEY']
+PUBLITIO_SECRET = os.environ['PUBLITIO_SECRET']
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -49,7 +41,14 @@ client.game_tracker_database = database_client['game_tracker']
 client.publitio_api = PublitioAPI(PUBLITIO_KEY, PUBLITIO_SECRET)
 client.reaction_events = []
 
-cogs = ('cogs.CustomCommands', 'cogs.TriviaCommands', 'cogs.ModTools', 'cogs.Reactions', 'cogs.NationalHockeyLeague')
+cogs = (
+        'cogs.CustomCommands',
+        'cogs.TriviaCommands',
+        'cogs.ModTools',
+        'cogs.Reactions',
+        'cogs.NationalHockeyLeague',
+        'cogs.HowlerAPI'
+        )
 
 
 def getCommandName(message):
