@@ -225,7 +225,7 @@ class NationalHockeyLeague(commands.Cog):
                 if 'goals' not in period:
                     continue
                 for goal in period['goals']:
-                    goal["period"] = period['period']
+                    goal["period"] = period['periodDescriptor']['number']
                     check_goals.append(goal)
 
             if len(check_goals) > len(self.goals):
