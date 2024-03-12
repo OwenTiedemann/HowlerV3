@@ -250,9 +250,9 @@ class NationalHockeyLeague(commands.Cog):
                 embed = discord.Embed(
                     title='Three Stars of the Game'
                 )
-                embed.add_field(name="⭐", value=f'{threeStars[0]["firstName"]} {threeStars[0]["lastName"]}', inline=False)
-                embed.add_field(name="⭐⭐", value=f'{threeStars[1]["firstName"]} {threeStars[1]["lastName"]}',inline=False)
-                embed.add_field(name="⭐⭐⭐", value=f'{threeStars[2]["firstName"]} {threeStars[2]["lastName"]}',inline=False)
+                embed.add_field(name="⭐", value=f'{threeStars[0]["name"]}', inline=False)
+                embed.add_field(name="⭐⭐", value=f'{threeStars[1]["firstName"]}', inline=False)
+                embed.add_field(name="⭐⭐⭐", value=f'{threeStars[2]["firstName"]}', inline=False)
                 channel = self.bot.get_channel(CHANNEL_ID)
                 await channel.send(embed=embed)
 
