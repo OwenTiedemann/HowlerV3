@@ -27,6 +27,7 @@ class ReactionEvent:
 
 class Reactions(commands.Cog, name="Reactions"):
     def __init__(self, bot):
+        print("Registering Reactions Cog")
         self.bot = bot
         self.reaction_events_collection = bot.reaction_event_database['events']
         self.get_all_reaction_events.start()

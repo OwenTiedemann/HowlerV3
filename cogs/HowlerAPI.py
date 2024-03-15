@@ -13,8 +13,8 @@ app = web.Application()
 routes = web.RouteTableDef()
 
 
-def rgb2hex(r,g,b):
-    return "#{:02x}{:02x}{:02x}".format(r,g,b)
+def rgb2hex(r, g, b):
+    return "#{:02x}{:02x}{:02x}".format(r, g, b)
 
 
 async def setup(bot):

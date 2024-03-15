@@ -251,8 +251,8 @@ class NationalHockeyLeague(commands.Cog):
                     title='Three Stars of the Game'
                 )
                 embed.add_field(name="⭐", value=f'{threeStars[0]["name"]}', inline=False)
-                embed.add_field(name="⭐⭐", value=f'{threeStars[1]["firstName"]}', inline=False)
-                embed.add_field(name="⭐⭐⭐", value=f'{threeStars[2]["firstName"]}', inline=False)
+                embed.add_field(name="⭐⭐", value=f'{threeStars[1]["name"]}', inline=False)
+                embed.add_field(name="⭐⭐⭐", value=f'{threeStars[2]["name"]}', inline=False)
                 channel = self.bot.get_channel(CHANNEL_ID)
                 await channel.send(embed=embed)
 
@@ -379,65 +379,5 @@ class NationalHockeyLeague(commands.Cog):
             return
 
         await ctx.send('oopsie didnt find anything blame bert')
-
-    @commands.command()
-    async def threestars(self, ctx):
-        threeStars = [
-            {
-                "star": 1,
-                "playerId": 8475760,
-                "teamAbbrev": "ARI",
-                "headshot": "https://assets.nhle.com/mugs/nhl/20232024/ARI/8475760.png",
-                "name": "N. Bjugstad",
-                "firstName": "Nick",
-                "lastName": "Bjugstad",
-                "sweaterNo": 17,
-                "position": "C",
-                "goals": 3,
-                "assists": 0,
-                "points": 3
-            },
-            {
-                "star": 2,
-                "playerId": 8478971,
-                "teamAbbrev": "ARI",
-                "headshot": "https://assets.nhle.com/mugs/nhl/20232024/ARI/8478971.png",
-                "name": "C. Ingram",
-                "firstName": "Connor",
-                "lastName": "Ingram",
-                "sweaterNo": 39,
-                "position": "G",
-                "goalsAgainstAverage": 0.0,
-                "savePctg": 1.0
-            },
-            {
-                "star": 3,
-                "playerId": 8479343,
-                "teamAbbrev": "ARI",
-                "headshot": "https://assets.nhle.com/mugs/nhl/20232024/ARI/8479343.png",
-                "name": "C. Keller",
-                "firstName": "Clayton",
-                "lastName": "Keller",
-                "sweaterNo": 9,
-                "position": "R",
-                "goals": 2,
-                "assists": 1,
-                "points": 3
-            }
-        ]
-
-        if len(threeStars) == 3:
-            embed = discord.Embed(
-                title='Three Stars of the Game'
-            )
-            embed.add_field(name="⭐", value=f'{threeStars[0]["firstName"]} {threeStars[0]["lastName"]}', inline=False)
-            embed.add_field(name="⭐⭐", value=f'{threeStars[1]["firstName"]} {threeStars[1]["lastName"]}', inline=False)
-            embed.add_field(name="⭐⭐⭐", value=f'{threeStars[2]["firstName"]} {threeStars[2]["lastName"]}', inline=False)
-            channel = self.bot.get_channel(CHANNEL_ID)
-            await channel.send(embed=embed)
-        else:
-            return
-
-
 async def setup(bot):
     await bot.add_cog(NationalHockeyLeague(bot))
